@@ -5,6 +5,7 @@ import (
 	"context"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/openshift/assisted-service/internal/common"
@@ -59,6 +60,7 @@ func (j *localJob) GenerateInstallConfig(ctx context.Context, cluster common.Clu
 		"aws_access_key_id="+j.Config.AwsAccessKeyID,
 		"aws_secret_access_key="+j.Config.AwsSecretAccessKey,
 		"WORK_DIR=/data",
+		"SKIP_CERT_VERIFICATION="+strconv.FormatBool(j.Config.SkipCertVerification),
 	)
 	return j.Execute("python", "./data/process-ignition-manifests-and-kubeconfig.py", envVars, log)
 }

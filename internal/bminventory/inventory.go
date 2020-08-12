@@ -69,17 +69,18 @@ var (
 )
 
 type Config struct {
-	ImageBuilder        string            `envconfig:"IMAGE_BUILDER" default:"quay.io/ocpmetal/installer-image-build:latest"`
-	AgentDockerImg      string            `envconfig:"AGENT_DOCKER_IMAGE" default:"quay.io/ocpmetal/assisted-installer-agent:latest"`
-	IgnitionGenerator   string            `envconfig:"IGNITION_GENERATE_IMAGE" default:"quay.io/ocpmetal/assisted-ignition-generator:latest"` // TODO: update the latest once the repository has git workflow
-	ServiceBaseURL      string            `envconfig:"SERVICE_BASE_URL"`
-	S3EndpointURL       string            `envconfig:"S3_ENDPOINT_URL" default:"http://10.35.59.36:30925"`
-	S3Bucket            string            `envconfig:"S3_BUCKET" default:"test"`
-	ImageExpirationTime time.Duration     `envconfig:"IMAGE_EXPIRATION_TIME" default:"60m"`
-	AwsAccessKeyID      string            `envconfig:"AWS_ACCESS_KEY_ID" default:"accessKey1"`
-	AwsSecretAccessKey  string            `envconfig:"AWS_SECRET_ACCESS_KEY" default:"verySecretKey1"`
-	DeployTarget        string            `envconfig:"DEPLOY_TARGET" default:"k8s"`
-	BaseDNSDomains      map[string]string `envconfig:"BASE_DNS_DOMAINS" default:""`
+	ImageBuilder         string            `envconfig:"IMAGE_BUILDER" default:"quay.io/ocpmetal/installer-image-build:latest"`
+	AgentDockerImg       string            `envconfig:"AGENT_DOCKER_IMAGE" default:"quay.io/ocpmetal/assisted-installer-agent:latest"`
+	IgnitionGenerator    string            `envconfig:"IGNITION_GENERATE_IMAGE" default:"quay.io/ocpmetal/assisted-ignition-generator:latest"` // TODO: update the latest once the repository has git workflow
+	ServiceBaseURL       string            `envconfig:"SERVICE_BASE_URL"`
+	S3EndpointURL        string            `envconfig:"S3_ENDPOINT_URL" default:"http://10.35.59.36:30925"`
+	S3Bucket             string            `envconfig:"S3_BUCKET" default:"test"`
+	ImageExpirationTime  time.Duration     `envconfig:"IMAGE_EXPIRATION_TIME" default:"60m"`
+	AwsAccessKeyID       string            `envconfig:"AWS_ACCESS_KEY_ID" default:"accessKey1"`
+	AwsSecretAccessKey   string            `envconfig:"AWS_SECRET_ACCESS_KEY" default:"verySecretKey1"`
+	DeployTarget         string            `envconfig:"DEPLOY_TARGET" default:"k8s"`
+	BaseDNSDomains       map[string]string `envconfig:"BASE_DNS_DOMAINS" default:""`
+	SkipCertVerification bool              `envconfig:"SKIP_CERT_VERIFICATION" default:"false"`
 }
 
 const agentMessageOfTheDay = `
@@ -102,7 +103,7 @@ const ignitionConfigFormat = `{
 "units": [{
 "name": "agent.service",
 "enabled": true,
-"contents": "[Service]\nType=simple\nRestart=always\nRestartSec=3\nStartLimitIntervalSec=0\nEnvironment=HTTPS_PROXY={{.ProxyURL}}\nEnvironment=HTTP_PROXY={{.ProxyURL}}\nEnvironment=http_proxy={{.ProxyURL}}\nEnvironment=https_proxy={{.ProxyURL}}\nEnvironment=PULL_SECRET_TOKEN={{.PullSecretToken}}\nExecStartPre=podman run --privileged --rm -v /usr/local/bin:/hostbin {{.AgentDockerImg}} cp /usr/bin/agent /hostbin\nExecStart=/usr/local/bin/agent --url {{.ServiceBaseURL}} --cluster-id {{.clusterId}} --agent-version {{.AgentDockerImg}}\n\n[Install]\nWantedBy=multi-user.target"
+"contents": "[Service]\nType=simple\nRestart=always\nRestartSec=3\nStartLimitIntervalSec=0\nEnvironment=HTTPS_PROXY={{.ProxyURL}}\nEnvironment=HTTP_PROXY={{.ProxyURL}}\nEnvironment=http_proxy={{.ProxyURL}}\nEnvironment=https_proxy={{.ProxyURL}}\nEnvironment=PULL_SECRET_TOKEN={{.PullSecretToken}}\nExecStartPre=podman run --privileged --rm -v /usr/local/bin:/hostbin {{.AgentDockerImg}} cp /usr/bin/agent /hostbin\nExecStart=/usr/local/bin/agent --url {{.ServiceBaseURL}} --cluster-id {{.clusterId}} --agent-version {{.AgentDockerImg}} --insecure={{.SkipCertVerification}} \n\n[Install]\nWantedBy=multi-user.target"
 }]
 },
 "storage": {
@@ -205,13 +206,14 @@ func (b *bareMetalInventory) formatIgnitionFile(cluster *common.Cluster, params 
 	}
 
 	var ignitionParams = map[string]string{
-		"userSshKey":      b.getUserSshKey(params),
-		"AgentDockerImg":  b.AgentDockerImg,
-		"ServiceBaseURL":  strings.TrimSpace(b.ServiceBaseURL),
-		"clusterId":       cluster.ID.String(),
-		"ProxyURL":        params.ImageCreateParams.ProxyURL,
-		"PullSecretToken": r.AuthRaw,
-		"AGENT_MOTD":      url.PathEscape(agentMessageOfTheDay),
+		"userSshKey":           b.getUserSshKey(params),
+		"AgentDockerImg":       b.AgentDockerImg,
+		"ServiceBaseURL":       strings.TrimSpace(b.ServiceBaseURL),
+		"clusterId":            cluster.ID.String(),
+		"ProxyURL":             params.ImageCreateParams.ProxyURL,
+		"PullSecretToken":      r.AuthRaw,
+		"AGENT_MOTD":           url.PathEscape(agentMessageOfTheDay),
+		"SkipCertVerification": strconv.FormatBool(b.SkipCertVerification),
 	}
 	tmpl, err := template.New("ignitionConfig").Parse(ignitionConfigFormat)
 	if err != nil {

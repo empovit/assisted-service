@@ -18,6 +18,7 @@ def load_deployment_options(parser=None):
     deploy_options.add_argument("--deploy-tag", help='Tag for all deployment images', type=str)
     deploy_options.add_argument("--deploy-manifest-tag", help='Tag of the assisted-installer-deployment repo to get the deployment images manifest from', type=str)
     deploy_options.add_argument("--deploy-manifest-path", help='Path to local deployment images manifest', type=str)
+    deploy_options.add_argument('--disable-tls', action='store_true', help='Disable TLS for assisted service transport', default=False)
     return parser.parse_args()
 
 

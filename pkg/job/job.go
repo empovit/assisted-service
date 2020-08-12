@@ -60,7 +60,8 @@ type Config struct {
 	IgnitionGenerator   string        `envconfig:"IGNITION_GENERATE_IMAGE" default:"quay.io/ocpmetal/assisted-ignition-generator:stable"` // TODO: update the latest once the repository has git workflow
 	ServiceBaseURL      string        `envconfig:"SERVICE_BASE_URL"`
 	//[TODO] -  change the default of Releae image to "", once everyine wll update their environment
-	ReleaseImage string `envconfig:"OPENSHIFT_INSTALL_RELEASE_IMAGE" default:"quay.io/openshift-release-dev/ocp-release@sha256:eab93b4591699a5a4ff50ad3517892653f04fb840127895bb3609b3cc68f98f3"`
+	ReleaseImage         string `envconfig:"OPENSHIFT_INSTALL_RELEASE_IMAGE" default:"quay.io/openshift-release-dev/ocp-release@sha256:eab93b4591699a5a4ff50ad3517892653f04fb840127895bb3609b3cc68f98f3"`
+	SkipCertVerification bool   `envconfig:"SKIP_CERT_VERIFICATION" default:"false"`
 }
 
 func New(log logrus.FieldLogger, kube client.Client, cfg Config) *kubeJob {
@@ -353,6 +354,10 @@ func (k *kubeJob) createKubeconfigJob(cluster *common.Cluster, jobName string, c
 								{
 									Name:  "aws_secret_access_key",
 									Value: k.Config.AwsSecretAccessKey,
+								},
+								{
+									Name:  "SKIP_CERT_VERIFICATION",
+									Value: strconv.FormatBool(k.Config.SkipCertVerification),
 								},
 							},
 							Resources: core.ResourceRequirements{

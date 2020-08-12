@@ -11,6 +11,7 @@ KUBECTL_CMD = 'kubectl'
 DOCKER = "docker"
 PODMAN = "podman"
 
+
 def check_output(cmd):
     return subprocess.check_output(cmd, shell=True).decode("utf-8")
 
@@ -38,16 +39,23 @@ def get_service_port(service, target=None, namespace='assisted-installer'):
         port = reply[4].split(":")[0]
     return port.strip()
 
-def get_service_url(service: str, target: Optional[str] = None, domain: str = "", namespace: str = 'assisted-installer') -> str:
+
+def get_service_url(service: str, target: Optional[str] = None, domain: str = "", namespace: str = 'assisted-installer', disable_tls: bool = False) -> str:
     # TODO: delete once rename everything to assisted-installer
     if target == "oc-ingress":
         service_host = f"{service}.{get_domain(domain)}"
-        service_port = "80"
+        return to_url(service_host, disable_tls)
     else:
         service_host = get_service_host(service, target, namespace=namespace)
         service_port = get_service_port(service, target, namespace=namespace)
+        return f'http://{service_host}:{service_port}'
 
-    return f'http://{service_host}:{service_port}'
+
+def to_url(host, port=None, disable_tls=False):
+    protocol = 'http' if disable_tls else 'https'
+    port = port if port else 80 if disable_tls else 443
+    return f'{protocol}://{host}:{port}'
+
 
 def apply(file):
     print(check_output("kubectl apply -f {}".format(file)))
