@@ -88,8 +88,20 @@ spec:
             - name: route53-creds
               mountPath: "/.aws"
               readOnly: true
+            - name: tls
+              mountPath: "/.tls"
+              readOnly: true
       volumes:
         - name: route53-creds
           secret:
             secretName: route53-creds
             optional: true
+        - name: tls
+          secret:
+            secretName: assisted-service-tls
+            optional: true
+            items:
+            - key: tls.key
+              path: key
+            - key: tls.crt
+              path: cert

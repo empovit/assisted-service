@@ -73,6 +73,9 @@ func main() {
 	}
 
 	port := flag.String("port", "8090", "define port that the service will listen to")
+	disableTLS := flag.Bool("disable-tls", false, "disable TLS")
+	keyFile := flag.String("keyfile", "/.tls/key", "key file to use when serving TLS")
+	certFile := flag.String("certfile", "/.tls/cert", "certificate file to use when serving TLS")
 	flag.Parse()
 
 	log.Println("Starting bm service")
@@ -189,7 +192,13 @@ func main() {
 		log.Fatal("Failed to init rest handler,", err)
 	}
 
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", swag.StringValue(port)), h))
+	address := fmt.Sprintf(":%s", swag.StringValue(port))
+	if *disableTLS {
+		log.Fatal(http.ListenAndServe(address, h))
+	} else {
+		log.Fatal(http.ListenAndServeTLS(address, *keyFile, *certFile, h))
+	}
+
 }
 
 func createS3Bucket(s3Client *s3wrapper.S3Client) {

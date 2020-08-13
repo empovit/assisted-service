@@ -23,10 +23,15 @@ def main():
 
     utils.apply(dst_file)
 
+    hostname = utils.get_service_host("assisted-installer", deploy_options.target, deploy_options.domain,
+                                      deploy_options.namespace)
+    if not deploy_options.disable_tls:
+        deploy_tls_secret.generate_secret(output_dir=os.path.join(os.getcwd(), "build"),
+                                          service="assisted-service", san=hostname,
+                                          namespace=deploy_options.namespace)
+
     # in case of OpenShift deploy ingress as well
     if deploy_options.target == "oc-ingress":
-        hostname = utils.get_service_host("assisted-installer", deploy_options.target, deploy_options.domain,
-                                          deploy_options.namespace)
 
         if deploy_options.disable_tls:
             template = "assisted-installer-ingress.yaml"
@@ -34,9 +39,6 @@ def main():
             print("WARNING: On OpenShift, in order to change TLS redirection behavior update "
                   "spec/tls/insecureEdgeTerminationPolicy (None|Allow|Redirect) "
                   "in the corresponding OpenShift route")
-            deploy_tls_secret.generate_secret(output_dir=os.path.join(os.getcwd(), "build"),
-                                              service="assisted-service", san=hostname,
-                                              namespace=deploy_options.namespace)
             template = "assisted-installer-ingress-tls.yaml"
 
         deploy_ingress(hostname=hostname, namespace=deploy_options.namespace, template_file=template)

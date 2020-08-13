@@ -48,7 +48,7 @@ def get_service_url(service: str, target: Optional[str] = None, domain: str = ""
     else:
         service_host = get_service_host(service, target, namespace=namespace)
         service_port = get_service_port(service, target, namespace=namespace)
-        return f'http://{service_host}:{service_port}'
+        return to_url(service_host, service_port, disable_tls)
 
 
 def to_url(host, port=None, disable_tls=False):
