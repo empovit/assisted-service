@@ -5,6 +5,8 @@ import deploy_tls_secret
 import deployment_options
 import utils
 
+SERVICE = "assisted-service"
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -24,7 +26,8 @@ def main():
     utils.apply(dst_file)
 
     # in case of OpenShift deploy ingress as well
-    if deploy_options.target == "oc-ingress":
+    if deploy_options.target == utils.INGRESS_REMOTE_TARGET:
+
         hostname = utils.get_service_host(
             'assisted-installer',
             deploy_options.target,
@@ -40,11 +43,25 @@ def main():
                   "spec/tls/insecureEdgeTerminationPolicy (None|Allow|Redirect) "
                   "in the corresponding OpenShift route")
             deploy_tls_secret.generate_secret(output_dir=os.path.join(os.getcwd(), "build"),
-                                              service="assisted-service", san=hostname,
+                                              service=SERVICE, san=f'DNS:{hostname}',
                                               namespace=deploy_options.namespace)
             template = "assisted-installer-ingress-tls.yaml"
 
         deploy_ingress(hostname=hostname, namespace=deploy_options.namespace, template_file=template)
+
+    elif not deploy_options.disable_tls:
+
+        hostname = utils.get_service_host(
+            SERVICE,
+            deploy_options.target,
+            deploy_options.domain,
+            deploy_options.namespace,
+            deploy_options.profile
+        )
+
+        deploy_tls_secret.generate_secret(output_dir=os.path.join(os.getcwd(), "build"),
+                                          service=SERVICE, san=f'IP:{hostname}',
+                                          namespace=deploy_options.namespace, keep_files=True)
 
 
 def deploy_ingress(hostname, namespace, template_file):

@@ -31,7 +31,7 @@ def generate_secret(output_dir, service, san, namespace, expiration=120, keep_fi
     server_cert_path = os.path.join(output_dir, f'{service}.crt')
     ext_file = os.path.join(output_dir, f'{service}-tls-ext.conf')
     with open(ext_file, "w") as f:
-        f.write(f'subjectAltName=DNS:{san}')
+        f.write(f'subjectAltName={san}')
 
     print(utils.check_output(f'openssl x509 -req -days {expiration} '
                              f'-extfile "{ext_file}" '

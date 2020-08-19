@@ -94,8 +94,7 @@ def get_service_url(
             namespace=namespace,
             profile=profile
         )
-
-    return to_url(host=service_host, port=service_port, disable_tls=disable_tls)
+        return to_url(host=service_host, port=service_port, disable_tls=True)
 
 
 def to_url(host, port=None, disable_tls=False):
