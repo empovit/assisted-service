@@ -16,7 +16,9 @@ def main():
     image_fqdn = deployment_options.get_image_override(deploy_options, "ocp-metal-ui", "UI_IMAGE")
     runtime_cmd = utils.get_runtime_command()
     utils.check_output(f'{runtime_cmd} pull {image_fqdn}')
-    cmd = f'{runtime_cmd} run {image_fqdn} /deploy/deploy_config.sh -i {image_fqdn} -n {deploy_options.namespace}'
+    cmd = f'{runtime_cmd} run --privileged -v /var/lib/containers/storage:/var/lib/containers/storage ' \
+          f'-v /run/systemd/journal/socket:/run/systemd/journal/socket ' \
+          f'{image_fqdn} /deploy/deploy_config.sh -i {image_fqdn} -n {deploy_options.namespace}'
     cmd += ' > {}'.format(dst_file)
     utils.check_output(cmd)
     print("Deploying {}".format(dst_file))
