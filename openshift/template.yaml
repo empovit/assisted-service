@@ -79,6 +79,11 @@ parameters:
 - name: LOG_LEVEL
   value: "info"
   required: true
+- name: SKIP_CERT_VERIFICATION
+  displayName: Turn off TLS certificate verification
+  description: Whether TLS certificate verification nust be turned off. Set "true" in development environments with self-signerd certificates
+  value: "false"
+  required: true
 apiVersion: v1
 kind: Template
 metadata:
@@ -240,6 +245,8 @@ objects:
                 value: ${LOG_LEVEL}
               - name: AWS_SHARED_CREDENTIALS_FILE
                 value: /etc/.aws/credentials
+              - name: SKIP_CERT_VERIFICATION
+                value: ${SKIP_CERT_VERIFICATION}
             volumeMounts:
               - name: route53-creds
                 mountPath: "/etc/.aws"

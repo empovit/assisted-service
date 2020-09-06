@@ -5,8 +5,6 @@ metadata:
   namespace: REPLACE_NAMESPACE
   annotations:
     haproxy.router.openshift.io/timeout: 120s
-    ingress.kubernetes.io/ssl-redirect: "false" # for haproxy
-    nginx.ingress.kubernetes.io/ssl-redirect: "false" # for nginx
 spec:
   tls:
     - hosts:
